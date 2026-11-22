@@ -1,0 +1,1477 @@
+<!DOCTYPE html>
+<html lang="en" class="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
+  <meta name="theme-color" content="#059669" />
+  <meta name="description" content="Mutual Fund Step-Up SIP Calculator in Indian Rupees (₹) with year-by-year wealth projection, inflation adjustment, and scenario comparison." />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-title" content="StepUp SIP Calc" />
+  <title>StepUp SIP Calc — Mutual Fund Step-Up SIP PWA</title>
+
+  <!-- Google Fonts: Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          }
+        }
+      }
+    };
+  </script>
+
+  <!-- Chart.js for responsive interactive charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+
+  <style>
+    /* Custom range slider styling for crisp fintech feel across browsers */
+    input[type="range"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 6px;
+      border-radius: 999px;
+      background: #e2e8f0;
+      outline: none;
+      cursor: pointer;
+    }
+    .dark input[type="range"] {
+      background: #334155;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #059669;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.4);
+      cursor: pointer;
+      transition: transform 0.15s ease, background-color 0.15s ease;
+    }
+    .dark input[type="range"]::-webkit-slider-thumb {
+      border-color: #0f172a;
+      background: #10b981;
+    }
+    input[type="range"]::-webkit-slider-thumb:hover {
+      transform: scale(1.12);
+    }
+    input[type="range"]::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #059669;
+      border: 3px solid #ffffff;
+      box-shadow: 0 2px 6px rgba(5, 150, 105, 0.4);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    /* Hide number input spinners cleanly */
+    input[type="number"]::-webkit-inner-spin-button,
+    input[type="number"]::-webkit-outer-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"] {
+      -moz-appearance: textfield;
+    }
+    /* Custom subtle scrollbars */
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.4);
+      border-radius: 999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.7);
+    }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100 font-sans antialiased selection:bg-brand-500 selection:text-white transition-colors duration-200">
+
+  <!-- Toast Notification Container (replaces alert/confirm) -->
+  <div id="toast-container" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0 pointer-events-none"></div>
+
+  <!-- Top Navigation Header -->
+  <header class="sticky top-0 z-30 bg-white/85 dark:bg-slate-900/85 backdrop-blur-md border-b border-slate-200/80 dark:border-slate-800">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      <!-- App Identity & PWA Offline Status -->
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-emerald-700 flex items-center justify-center text-white shadow-sm shrink-0">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
+          </svg>
+        </div>
+        <div class="truncate">
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-bold tracking-tight text-slate-900 dark:text-white truncate">StepUp SIP Calc</h1>
+            <span id="pwa-status-badge" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-brand-50 text-brand-700 dark:bg-brand-950/80 dark:text-brand-300 border border-brand-200/70 dark:border-brand-800/60">
+              <span id="network-dot" class="w-1.5 h-1.5 rounded-full bg-brand-500"></span>
+              <span id="network-text">Offline Ready</span>
+            </span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">Mutual Fund Step-Up Wealth Simulator (₹ INR)</p>
+        </div>
+      </div>
+
+      <!-- Header Actions -->
+      <div class="flex items-center gap-2 shrink-0">
+        <!-- Install App Button (shown when beforeinstallprompt fires or manual install help) -->
+        <button id="install-pwa-btn" type="button" class="hidden items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold bg-brand-600 hover:bg-brand-700 text-white shadow-sm transition">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          <span>Install App</span>
+        </button>
+
+        <!-- Saved Scenarios Drawer Trigger -->
+        <button id="open-scenarios-btn" type="button" class="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs sm:text-sm font-medium bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
+          <svg class="w-4 h-4 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+          </svg>
+          <span>Saved</span>
+          <span id="saved-count-badge" class="px-1.5 py-0.2 rounded-full text-[11px] font-bold bg-brand-600 text-white">0</span>
+        </button>
+
+        <!-- Theme Toggle -->
+        <button id="theme-toggle-btn" type="button" aria-label="Toggle Dark Mode" class="p-2.5 rounded-xl bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition">
+          <!-- Sun icon (shown in dark mode) -->
+          <svg id="icon-sun" class="w-4 h-4 hidden dark:block text-amber-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <!-- Moon icon (shown in light mode) -->
+          <svg id="icon-moon" class="w-4 h-4 block dark:hidden text-slate-700" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 space-y-6">
+
+    <!-- Top Grid: Left Input Controls + Right KPI Summary & Charts -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+
+      <!-- LEFT COLUMN: Interactive Calculator Inputs (5 cols on lg) -->
+      <section class="lg:col-span-5 bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-5 sm:p-6 space-y-6">
+        <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-4">
+          <div>
+            <h2 class="text-base font-bold text-slate-900 dark:text-white">SIP Parameters</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Adjust sliders or enter exact values</p>
+          </div>
+          <button id="reset-defaults-btn" type="button" class="text-xs font-medium text-slate-500 hover:text-brand-600 dark:text-slate-400 dark:hover:text-brand-400 px-2.5 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            Reset
+          </button>
+        </div>
+
+        <!-- 1. Starting Monthly SIP Amount -->
+        <div class="space-y-2.5">
+          <div class="flex items-center justify-between gap-2">
+            <label for="input-sip" class="text-sm font-medium text-slate-700 dark:text-slate-300">Starting Monthly SIP</label>
+            <div class="relative flex items-center w-36 sm:w-40">
+              <span class="absolute left-3 text-sm font-semibold text-slate-400">₹</span>
+              <input id="input-sip" type="number" min="500" max="500000" step="500" value="10000"
+                class="w-full pl-7 pr-3 py-1.5 text-right text-sm font-bold rounded-xl bg-brand-50/70 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-brand-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+            </div>
+          </div>
+          <input id="slider-sip" type="range" min="500" max="500000" step="500" value="10000" aria-label="Starting Monthly SIP Slider" />
+          <div class="flex justify-between text-[11px] text-slate-400">
+            <span>₹500</span>
+            <span id="sip-shorthand-hint" class="font-medium text-slate-500 dark:text-slate-400">₹10.00 Thousand / mo</span>
+            <span>₹5,00,000</span>
+          </div>
+        </div>
+
+        <!-- 2. Annual Step-Up (Percentage vs Fixed Rupee Toggle) -->
+        <div class="space-y-2.5 pt-1">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <label for="input-stepup" class="text-sm font-medium text-slate-700 dark:text-slate-300">Annual Step-Up</label>
+              <!-- Mode Pill Switcher -->
+              <div class="inline-flex rounded-lg bg-slate-100 dark:bg-slate-800 p-0.5 border border-slate-200/60 dark:border-slate-700" role="group" aria-label="Step-Up Type">
+                <button id="mode-percent-btn" type="button" class="px-2 py-0.5 text-[11px] font-semibold rounded-md bg-white dark:bg-slate-700 text-brand-700 dark:text-brand-300 shadow-xs transition">
+                  % / yr
+                </button>
+                <button id="mode-fixed-btn" type="button" class="px-2 py-0.5 text-[11px] font-semibold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition">
+                  +₹ / yr
+                </button>
+              </div>
+            </div>
+
+            <div class="relative flex items-center w-32 sm:w-36">
+              <span id="stepup-prefix" class="hidden absolute left-3 text-sm font-semibold text-slate-400">+₹</span>
+              <input id="input-stepup" type="number" min="0" max="50" step="1" value="10"
+                class="w-full px-3 pr-7 py-1.5 text-right text-sm font-bold rounded-xl bg-brand-50/70 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-brand-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              <span id="stepup-suffix" class="absolute right-3 text-sm font-semibold text-slate-400">%</span>
+            </div>
+          </div>
+          <input id="slider-stepup" type="range" min="0" max="50" step="1" value="10" aria-label="Annual Step-Up Slider" />
+          <div class="flex justify-between text-[11px] text-slate-400">
+            <span id="stepup-min-label">0% (Flat SIP)</span>
+            <span id="final-year-sip-hint" class="font-medium text-brand-600 dark:text-brand-400">Year 15 SIP: ₹37,975/mo</span>
+            <span id="stepup-max-label">50%</span>
+          </div>
+        </div>
+
+        <!-- 3. Expected Annual Return Rate -->
+        <div class="space-y-2.5 pt-1">
+          <div class="flex items-center justify-between gap-2">
+            <label for="input-rate" class="text-sm font-medium text-slate-700 dark:text-slate-300">Expected Return (p.a.)</label>
+            <div class="relative flex items-center w-28 sm:w-32">
+              <input id="input-rate" type="number" min="1" max="30" step="0.5" value="12"
+                class="w-full pl-3 pr-7 py-1.5 text-right text-sm font-bold rounded-xl bg-brand-50/70 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-brand-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              <span class="absolute right-3 text-sm font-semibold text-slate-400">%</span>
+            </div>
+          </div>
+          <input id="slider-rate" type="range" min="1" max="30" step="0.5" value="12" aria-label="Expected Return Slider" />
+          <div class="flex justify-between text-[11px] text-slate-400">
+            <span>1%</span>
+            <span class="text-slate-500 dark:text-slate-400">Compounded monthly</span>
+            <span>30%</span>
+          </div>
+        </div>
+
+        <!-- 4. Investment Horizon (Years) + Quick Presets -->
+        <div class="space-y-2.5 pt-1">
+          <div class="flex items-center justify-between gap-2">
+            <label for="input-years" class="text-sm font-medium text-slate-700 dark:text-slate-300">Investment Duration</label>
+            <div class="relative flex items-center w-28 sm:w-32">
+              <input id="input-years" type="number" min="1" max="40" step="1" value="15"
+                class="w-full pl-3 pr-10 py-1.5 text-right text-sm font-bold rounded-xl bg-brand-50/70 dark:bg-slate-800 text-brand-700 dark:text-brand-300 border border-brand-200/80 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+              <span class="absolute right-3 text-xs font-semibold text-slate-400">Yrs</span>
+            </div>
+          </div>
+          <input id="slider-years" type="range" min="1" max="40" step="1" value="15" aria-label="Investment Duration Slider" />
+          <!-- Quick Preset Pills -->
+          <div class="flex items-center justify-between gap-1.5 pt-1">
+            <span class="text-[11px] text-slate-400">Presets:</span>
+            <div class="flex flex-wrap gap-1.5">
+              <button type="button" data-years="5" class="year-preset-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-100 dark:hover:bg-brand-900/50 transition">5Y</button>
+              <button type="button" data-years="10" class="year-preset-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-100 dark:hover:bg-brand-900/50 transition">10Y</button>
+              <button type="button" data-years="15" class="year-preset-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-brand-600 text-white shadow-xs transition">15Y</button>
+              <button type="button" data-years="20" class="year-preset-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-100 dark:hover:bg-brand-900/50 transition">20Y</button>
+              <button type="button" data-years="25" class="year-preset-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-100 dark:hover:bg-brand-900/50 transition">25Y</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Optional Inflation Adjustment Toggle -->
+        <div class="pt-3 border-t border-slate-100 dark:border-slate-800 space-y-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <span class="text-sm font-medium text-slate-700 dark:text-slate-300">Adjust for Inflation</span>
+              <p class="text-[11px] text-slate-500 dark:text-slate-400">Show corpus in today's purchasing power</p>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input id="toggle-inflation" type="checkbox" class="sr-only peer" />
+              <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none peer-focus:ring-2 peer-focus:ring-brand-500 dark:peer-focus:ring-brand-600 rounded-full peer dark:bg-slate-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-slate-600 peer-checked:bg-brand-600"></div>
+            </label>
+          </div>
+
+          <div id="inflation-controls" class="hidden space-y-2 pl-3 border-l-2 border-brand-500/40">
+            <div class="flex items-center justify-between">
+              <label for="input-inflation" class="text-xs font-medium text-slate-600 dark:text-slate-400">Expected Inflation Rate</label>
+              <div class="relative flex items-center w-24">
+                <input id="input-inflation" type="number" min="1" max="15" step="0.5" value="6"
+                  class="w-full pl-2.5 pr-6 py-1 text-right text-xs font-bold rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-800 dark:text-slate-200 border border-slate-200 dark:border-slate-700 focus:outline-none focus:ring-2 focus:ring-brand-500" />
+                <span class="absolute right-2 text-xs font-semibold text-slate-400">%</span>
+              </div>
+            </div>
+            <input id="slider-inflation" type="range" min="1" max="15" step="0.5" value="6" aria-label="Inflation Rate Slider" />
+          </div>
+        </div>
+
+        <!-- Save Scenario Action Button -->
+        <div class="pt-2">
+          <button id="save-scenario-btn" type="button" class="w-full py-3 px-4 rounded-xl bg-slate-900 hover:bg-slate-800 dark:bg-brand-600 dark:hover:bg-brand-500 text-white font-semibold text-sm shadow-sm flex items-center justify-center gap-2 transition active:scale-[0.99]">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+            </svg>
+            <span>Save Scenario for Comparison</span>
+          </button>
+        </div>
+      </section>
+
+      <!-- RIGHT COLUMN: KPI Cards & Interactive Visualizations (7 cols on lg) -->
+      <section class="lg:col-span-7 space-y-6">
+
+        <!-- KPI Summary Cards Grid -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <!-- Card 1: Total Invested -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Total Invested</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-indigo-500"></span>
+            </div>
+            <div id="kpi-invested" class="text-lg sm:text-xl font-extrabold text-slate-900 dark:text-white tracking-tight truncate">₹38,12,698</div>
+            <div id="kpi-invested-short" class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">₹38.13 Lakhs</div>
+          </div>
+
+          <!-- Card 2: Estimated Returns -->
+          <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 p-4 sm:p-5 shadow-sm">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs font-medium text-slate-500 dark:text-slate-400">Est. Wealth Gain</span>
+              <span class="w-2.5 h-2.5 rounded-full bg-brand-500"></span>
+            </div>
+            <div id="kpi-returns" class="text-lg sm:text-xl font-extrabold text-brand-600 dark:text-brand-400 tracking-tight truncate">₹48,71,152</div>
+            <div id="kpi-returns-short" class="text-xs font-medium text-slate-500 dark:text-slate-400 mt-0.5">₹48.71 Lakhs (2.28x)</div>
+          </div>
+
+          <!-- Card 3: Total Step-Up Corpus -->
+          <div class="bg-gradient-to-br from-brand-600 to-emerald-800 rounded-2xl p-4 sm:p-5 shadow-md text-white">
+            <div class="flex items-center justify-between mb-1">
+              <span id="kpi-corpus-label" class="text-xs font-medium text-brand-100">Total Corpus Value</span>
+              <span class="px-1.5 py-0.5 rounded bg-white/15 text-[10px] font-semibold">Step-Up</span>
+            </div>
+            <div id="kpi-corpus" class="text-lg sm:text-xl font-extrabold tracking-tight truncate">₹86,83,849</div>
+            <div id="kpi-corpus-short" class="text-xs font-medium text-brand-100 mt-0.5">₹86.84 Lakhs</div>
+          </div>
+        </div>
+
+        <!-- Comparison Highlight Banner: Step-Up vs Flat SIP -->
+        <div class="bg-emerald-50/90 dark:bg-brand-950/40 border border-brand-200/80 dark:border-brand-800/60 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div class="flex items-start sm:items-center gap-3">
+            <div class="w-9 h-9 rounded-xl bg-brand-600/15 dark:bg-brand-500/20 text-brand-700 dark:text-brand-300 flex items-center justify-center shrink-0 mt-0.5 sm:mt-0">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs sm:text-sm font-semibold text-slate-900 dark:text-white">
+                Extra Wealth vs. Flat SIP: <span id="badge-extra-wealth" class="text-brand-700 dark:text-brand-400 font-extrabold">+₹36,38,089</span>
+              </p>
+              <p class="text-xs text-slate-600 dark:text-slate-400">
+                Flat SIP (0% step-up) yields <span id="flat-sip-reference" class="font-semibold text-slate-800 dark:text-slate-200">₹50,45,760</span> (<span id="badge-extra-pct" class="font-semibold text-brand-600 dark:text-brand-400">+72.1% more</span> with Step-Up)
+              </p>
+            </div>
+          </div>
+          <div id="real-value-pill" class="hidden shrink-0 px-3 py-1.5 rounded-xl bg-white dark:bg-slate-900 border border-brand-200 dark:border-brand-800 text-xs">
+            <span class="text-slate-500 dark:text-slate-400">Nominal Corpus:</span>
+            <span id="nominal-corpus-ref" class="font-bold text-slate-800 dark:text-slate-200 ml-1">₹86.84 L</span>
+          </div>
+        </div>
+
+        <!-- Interactive Charts Card -->
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm p-5 sm:p-6">
+          <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+            <div>
+              <h3 class="text-base font-bold text-slate-900 dark:text-white">Wealth Growth Projection</h3>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Year-by-year trajectory comparing Step-Up vs. Flat SIP</p>
+            </div>
+            <!-- Chart Switcher Tabs -->
+            <div class="inline-flex rounded-xl bg-slate-100 dark:bg-slate-800 p-1">
+              <button id="tab-growth-chart" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition">
+                Growth Curve
+              </button>
+              <button id="tab-breakdown-chart" type="button" class="px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition">
+                Corpus Split
+              </button>
+            </div>
+          </div>
+
+          <!-- Growth Line/Area Chart Container -->
+          <div id="growth-chart-wrapper" class="relative w-full h-64 sm:h-72">
+            <canvas id="growthChart"></canvas>
+          </div>
+
+          <!-- Donut Breakdown Chart Container -->
+          <div id="breakdown-chart-wrapper" class="hidden relative w-full h-64 sm:h-72 flex items-center justify-center">
+            <div class="w-full max-w-xs h-full">
+              <canvas id="breakdownChart"></canvas>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <!-- BOTTOM SECTION: Year-by-Year Amortization & Growth Schedule Table -->
+    <section class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-sm overflow-hidden">
+      <div class="p-5 sm:p-6 border-b border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <h3 class="text-base font-bold text-slate-900 dark:text-white">Year-by-Year SIP Schedule</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Detailed annual contribution, compounding returns, and flat SIP benchmark</p>
+        </div>
+        <button id="export-csv-btn" type="button" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-semibold bg-slate-100 hover:bg-slate-200/80 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 transition self-start sm:self-auto">
+          <svg class="w-4 h-4 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span>Download CSV</span>
+        </button>
+      </div>
+
+      <div class="overflow-x-auto max-h-[440px]">
+        <table class="w-full text-left border-collapse">
+          <thead class="sticky top-0 bg-slate-50 dark:bg-slate-800/95 backdrop-blur-xs text-[11px] uppercase tracking-wider text-slate-500 dark:text-slate-400 border-b border-slate-200 dark:border-slate-700">
+            <tr>
+              <th class="py-3.5 px-4 font-semibold">Year</th>
+              <th class="py-3.5 px-4 font-semibold text-right">Monthly SIP</th>
+              <th class="py-3.5 px-4 font-semibold text-right">Annual Invested</th>
+              <th class="py-3.5 px-4 font-semibold text-right">Total Invested</th>
+              <th class="py-3.5 px-4 font-semibold text-right">Est. Returns</th>
+              <th class="py-3.5 px-4 font-semibold text-right text-brand-700 dark:text-brand-400">Step-Up Corpus</th>
+              <th class="py-3.5 px-4 font-semibold text-right">Flat SIP Corpus</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-table-body" class="divide-y divide-slate-100 dark:divide-slate-800/80 text-xs sm:text-sm">
+            <!-- Dynamically populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- Footer Disclaimer -->
+    <footer class="text-center text-xs text-slate-400 dark:text-slate-500 py-4 space-y-1">
+      <p>Calculations assume SIP instalments are invested at the beginning of each month and stepped up annually every 12 months.</p>
+      <p>Mutual fund investments are subject to market risks. This simulator is for educational planning only.</p>
+    </footer>
+  </main>
+
+  <!-- SLIDE-OVER DRAWER / MODAL: Saved Scenarios & Comparison -->
+  <div id="scenarios-modal" class="fixed inset-0 z-50 hidden" aria-labelledby="modal-title" role="dialog" aria-modal="true">
+    <!-- Backdrop -->
+    <div id="scenarios-backdrop" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs transition-opacity"></div>
+
+    <!-- Drawer Panel -->
+    <div class="fixed inset-y-0 right-0 max-w-full flex pl-10">
+      <div class="w-screen max-w-md bg-white dark:bg-slate-900 shadow-2xl border-l border-slate-200 dark:border-slate-800 flex flex-col justify-between">
+        <!-- Drawer Header -->
+        <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <h2 id="modal-title" class="text-base font-bold text-slate-900 dark:text-white">Saved SIP Scenarios</h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">Stored offline on your device for side-by-side comparison</p>
+          </div>
+          <button id="close-scenarios-btn" type="button" class="p-2 rounded-xl text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Saved Scenarios List -->
+        <div id="saved-scenarios-list" class="flex-1 overflow-y-auto p-5 space-y-3">
+          <!-- Populated dynamically -->
+        </div>
+
+        <!-- Drawer Footer -->
+        <div class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/60 flex items-center justify-between gap-3">
+          <button id="clear-all-scenarios-btn" type="button" class="text-xs font-semibold text-rose-600 hover:text-rose-700 dark:text-rose-400 px-3 py-2 rounded-lg hover:bg-rose-50 dark:hover:bg-rose-950/40 transition">
+            Clear All
+          </button>
+          <button id="save-current-from-drawer-btn" type="button" class="px-4 py-2 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-semibold shadow-xs transition">
+            + Save Current Plan
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Application Logic & PWA Setup -->
+  <script>
+    (function () {
+      'use strict';
+
+      // =========================================================================
+      // 1. PWA MANIFEST & OFFLINE SERVICE WORKER REGISTRATION
+      // =========================================================================
+      function initPWA() {
+        try {
+          // Generate crisp SVG app icon as data URL for Manifest
+          const iconSvg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+            <defs>
+              <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="#10b981"/>
+                <stop offset="100%" stop-color="#047857"/>
+              </linearGradient>
+            </defs>
+            <rect width="512" height="512" rx="112" fill="url(#g)"/>
+            <path d="M120 340 L210 250 L275 305 L392 172" fill="none" stroke="#ffffff" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M315 172 H392 V249" fill="none" stroke="#ffffff" stroke-width="38" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>`;
+          const iconDataUrl = 'data:image/svg+xml;base64,' + btoa(iconSvg);
+
+          const manifestObj = {
+            name: 'StepUp SIP Calc — Mutual Fund Simulator',
+            short_name: 'StepUp SIP Calc',
+            description: 'Mutual Fund Step-Up SIP Calculator in Indian Rupees (₹) with offline scenario comparison.',
+            start_url: './',
+            display: 'standalone',
+            background_color: '#f8fafc',
+            theme_color: '#059669',
+            icons: [
+              { src: iconDataUrl, sizes: '192x192', type: 'image/svg+xml', purpose: 'any maskable' },
+              { src: iconDataUrl, sizes: '512x512', type: 'image/svg+xml', purpose: 'any maskable' }
+            ]
+          };
+
+          const manifestBlob = new Blob([JSON.stringify(manifestObj)], { type: 'application/manifest+json' });
+          const manifestUrl = URL.createObjectURL(manifestBlob);
+          const linkEl = document.createElement('link');
+          linkEl.rel = 'manifest';
+          linkEl.href = manifestUrl;
+          document.head.appendChild(linkEl);
+
+          // Register lightweight Service Worker via Blob URL for offline caching
+          if ('serviceWorker' in navigator && (window.location.protocol === 'https:' || window.location.hostname === 'localhost')) {
+            const swCode = `
+              const CACHE_NAME = 'stepup-sip-pwa-v1';
+              self.addEventListener('install', (event) => {
+                self.skipWaiting();
+              });
+              self.addEventListener('activate', (event) => {
+                event.waitUntil(clients.claim());
+              });
+              self.addEventListener('fetch', (event) => {
+                if (event.request.method !== 'GET') return;
+                event.respondWith(
+                  caches.open(CACHE_NAME).then((cache) =>
+                    cache.match(event.request).then((cachedResponse) => {
+                      const fetchPromise = fetch(event.request)
+                        .then((networkResponse) => {
+                          if (networkResponse && networkResponse.status === 200) {
+                            cache.put(event.request, networkResponse.clone());
+                          }
+                          return networkResponse;
+                        })
+                        .catch(() => cachedResponse);
+                      return cachedResponse || fetchPromise;
+                    })
+                  )
+                );
+              });
+            `;
+            const swBlob = new Blob([swCode], { type: 'application/javascript' });
+            const swUrl = URL.createObjectURL(swBlob);
+            navigator.serviceWorker.register(swUrl).catch(() => {
+              // Fallback gracefully in sandboxed iframes where Blob SW scope may be restricted
+            });
+          }
+        } catch (err) {
+          console.warn('PWA initialization fallback:', err);
+        }
+
+        // Monitor Online/Offline Status
+        const updateOnlineStatus = () => {
+          const dot = document.getElementById('network-dot');
+          const text = document.getElementById('network-text');
+          if (navigator.onLine) {
+            dot.className = 'w-1.5 h-1.5 rounded-full bg-brand-500';
+            text.textContent = 'Offline Ready';
+          } else {
+            dot.className = 'w-1.5 h-1.5 rounded-full bg-amber-500';
+            text.textContent = 'Offline Mode';
+          }
+        };
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        // Capture beforeinstallprompt for PWA installation button
+        let deferredPrompt = null;
+        const installBtn = document.getElementById('install-pwa-btn');
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          installBtn.classList.remove('hidden');
+          installBtn.classList.add('inline-flex');
+        });
+
+        installBtn.addEventListener('click', async () => {
+          if (!deferredPrompt) return;
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            showToast('App installed! You can launch StepUp SIP Calc from your home screen.', 'success');
+            installBtn.classList.add('hidden');
+          }
+          deferredPrompt = null;
+        });
+      }
+
+      // =========================================================================
+      // 2. APPLICATION STATE & INDIAN CURRENCY FORMATTERS
+      // =========================================================================
+      const STORAGE_KEY = 'stepup_sip_saved_scenarios_v1';
+      const THEME_KEY = 'stepup_sip_theme_v1';
+
+      const state = {
+        sipAmount: 10000,
+        stepUpMode: 'percent', // 'percent' | 'fixed'
+        stepUpPercent: 10,
+        stepUpFixed: 1000,
+        returnRate: 12,
+        years: 15,
+        adjustInflation: false,
+        inflationRate: 6,
+        activeChartTab: 'growth' // 'growth' | 'breakdown'
+      };
+
+      const inrFormatter = new Intl.NumberFormat('en-IN', {
+        style: 'currency',
+        currency: 'INR',
+        maximumFractionDigits: 0
+      });
+
+      function formatINR(num) {
+        if (!isFinite(num) || isNaN(num)) return '₹0';
+        return inrFormatter.format(Math.round(num));
+      }
+
+      function formatShortINR(num) {
+        if (!isFinite(num) || isNaN(num)) return '₹0';
+        const abs = Math.abs(num);
+        const sign = num < 0 ? '-' : '';
+        if (abs >= 1e7) {
+          return `${sign}₹${(abs / 1e7).toFixed(2)} Cr`;
+        }
+        if (abs >= 1e5) {
+          return `${sign}₹${(abs / 1e5).toFixed(2)} Lakhs`;
+        }
+        if (abs >= 1e3) {
+          return `${sign}₹${(abs / 1e3).toFixed(2)} K`;
+        }
+        return `${sign}₹${Math.round(abs)}`;
+      }
+
+      function showToast(message, type = 'info') {
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        const bgClass = type === 'success'
+          ? 'bg-slate-900 dark:bg-brand-700 text-white border-brand-500/40'
+          : 'bg-slate-800 text-white border-slate-700';
+        toast.className = `pointer-events-auto flex items-center justify-between gap-3 px-4 py-3 rounded-xl border shadow-lg text-xs sm:text-sm font-medium transition-all duration-300 transform translate-y-2 opacity-0 ${bgClass}`;
+        toast.innerHTML = `<span>${message}</span>`;
+        container.appendChild(toast);
+
+        requestAnimationFrame(() => {
+          toast.classList.remove('translate-y-2', 'opacity-0');
+        });
+
+        setTimeout(() => {
+          toast.classList.add('opacity-0', 'translate-y-2');
+          setTimeout(() => toast.remove(), 300);
+        }, 3200);
+      }
+
+      // =========================================================================
+      // 3. ACCURATE STEP-UP SIP CALCULATION ENGINE
+      // =========================================================================
+      /**
+       * Computes monthly compounding at the start of each month,
+       * stepping up every 12 months (either by % or fixed ₹ amount).
+       */
+      function calculateStepUpSIP(params) {
+        const {
+          sipAmount,
+          stepUpMode,
+          stepUpPercent,
+          stepUpFixed,
+          returnRate,
+          years,
+          adjustInflation,
+          inflationRate
+        } = params;
+
+        const monthlyRate = returnRate / 100 / 12;
+        const annualInflation = adjustInflation ? inflationRate / 100 : 0;
+
+        let stepUpCorpus = 0;
+        let flatCorpus = 0;
+        let totalInvested = 0;
+        let flatTotalInvested = 0;
+
+        const yearlySchedule = [];
+
+        for (let y = 1; y <= years; y++) {
+          const yearIndex = y - 1;
+          const currentMonthlySIP = stepUpMode === 'percent'
+            ? sipAmount * Math.pow(1 + stepUpPercent / 100, yearIndex)
+            : sipAmount + stepUpFixed * yearIndex;
+
+          let annualInvested = 0;
+
+          // Simulate 12 months for year y (investment at start of each month)
+          for (let m = 1; m <= 12; m++) {
+            totalInvested += currentMonthlySIP;
+            annualInvested += currentMonthlySIP;
+            stepUpCorpus = (stepUpCorpus + currentMonthlySIP) * (1 + monthlyRate);
+
+            flatTotalInvested += sipAmount;
+            flatCorpus = (flatCorpus + sipAmount) * (1 + monthlyRate);
+          }
+
+          // Inflation deflation factor at end of year y
+          const deflator = adjustInflation ? Math.pow(1 + annualInflation, y) : 1;
+
+          const displayStepUpCorpus = stepUpCorpus / deflator;
+          const displayFlatCorpus = flatCorpus / deflator;
+          const displayTotalInvested = totalInvested; // Nominal capital out-of-pocket
+          const displayReturns = Math.max(0, displayStepUpCorpus - displayTotalInvested);
+
+          yearlySchedule.push({
+            year: y,
+            monthlySIP: currentMonthlySIP,
+            annualInvested,
+            totalInvested: displayTotalInvested,
+            nominalStepUpCorpus: stepUpCorpus,
+            stepUpCorpus: displayStepUpCorpus,
+            flatCorpus: displayFlatCorpus,
+            estimatedReturns: displayReturns
+          });
+        }
+
+        const finalRow = yearlySchedule[yearlySchedule.length - 1];
+        const nominalCorpus = finalRow.nominalStepUpCorpus;
+        const finalCorpus = finalRow.stepUpCorpus;
+        const finalFlatCorpus = finalRow.flatCorpus;
+        const wealthGain = finalCorpus - totalInvested;
+        const extraWealth = finalCorpus - finalFlatCorpus;
+        const extraPct = finalFlatCorpus > 0 ? ((extraWealth / finalFlatCorpus) * 100) : 0;
+        const wealthMultiple = totalInvested > 0 ? (finalCorpus / totalInvested) : 1;
+
+        return {
+          totalInvested,
+          wealthGain,
+          finalCorpus,
+          nominalCorpus,
+          finalFlatCorpus,
+          extraWealth,
+          extraPct,
+          wealthMultiple,
+          finalMonthlySIP: finalRow.monthlySIP,
+          yearlySchedule
+        };
+      }
+
+      // =========================================================================
+      // 4. INTERACTIVE CHARTS (CHART.JS)
+      // =========================================================================
+      let growthChartInstance = null;
+      let breakdownChartInstance = null;
+
+      function getChartThemeColors() {
+        const isDark = document.documentElement.classList.contains('dark');
+        return {
+          text: isDark ? '#94a3b8' : '#64748b',
+          grid: isDark ? 'rgba(51, 65, 85, 0.45)' : 'rgba(226, 232, 240, 0.8)',
+          tooltipBg: isDark ? '#0f172a' : '#ffffff',
+          tooltipText: isDark ? '#f8fafc' : '#0f172a',
+          tooltipBorder: isDark ? '#334155' : '#e2e8f0'
+        };
+      }
+
+      function renderCharts(result) {
+        const colors = getChartThemeColors();
+        const labels = result.yearlySchedule.map((row) => `Yr ${row.year}`);
+        const stepUpData = result.yearlySchedule.map((row) => Math.round(row.stepUpCorpus));
+        const flatData = result.yearlySchedule.map((row) => Math.round(row.flatCorpus));
+        const investedData = result.yearlySchedule.map((row) => Math.round(row.totalInvested));
+
+        // 1. Growth Trajectory Line/Area Chart
+        const growthCtx = document.getElementById('growthChart').getContext('2d');
+        if (growthChartInstance) {
+          growthChartInstance.destroy();
+        }
+
+        growthChartInstance = new Chart(growthCtx, {
+          type: 'line',
+          data: {
+            labels,
+            datasets: [
+              {
+                label: 'Step-Up SIP Corpus',
+                data: stepUpData,
+                borderColor: '#059669',
+                backgroundColor: 'rgba(16, 185, 129, 0.14)',
+                borderWidth: 2.5,
+                fill: true,
+                tension: 0.32,
+                pointRadius: result.yearlySchedule.length > 20 ? 1.5 : 3,
+                pointHoverRadius: 5
+              },
+              {
+                label: 'Flat SIP (0% Step-Up)',
+                data: flatData,
+                borderColor: '#f59e0b',
+                backgroundColor: 'transparent',
+                borderWidth: 2,
+                borderDash: [5, 5],
+                fill: false,
+                tension: 0.32,
+                pointRadius: 0,
+                pointHoverRadius: 4
+              },
+              {
+                label: 'Total Invested',
+                data: investedData,
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.08)',
+                borderWidth: 2,
+                fill: true,
+                tension: 0.25,
+                pointRadius: 0,
+                pointHoverRadius: 4
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: {
+              mode: 'index',
+              intersect: false
+            },
+            plugins: {
+              legend: {
+                position: 'top',
+                labels: {
+                  color: colors.text,
+                  usePointStyle: true,
+                  boxWidth: 8,
+                  font: { family: 'Inter', size: 11, weight: '600' }
+                }
+              },
+              tooltip: {
+                backgroundColor: colors.tooltipBg,
+                titleColor: colors.tooltipText,
+                bodyColor: colors.tooltipText,
+                borderColor: colors.tooltipBorder,
+                borderWidth: 1,
+                padding: 10,
+                callbacks: {
+                  label: (ctx) => `${ctx.dataset.label}: ${formatINR(ctx.parsed.y)} (${formatShortINR(ctx.parsed.y)})`
+                }
+              }
+            },
+            scales: {
+              x: {
+                grid: { display: false },
+                ticks: {
+                  color: colors.text,
+                  maxTicksLimit: 10,
+                  font: { family: 'Inter', size: 11 }
+                }
+              },
+              y: {
+                grid: { color: colors.grid },
+                ticks: {
+                  color: colors.text,
+                  font: { family: 'Inter', size: 11 },
+                  callback: (val) => formatShortINR(val)
+                }
+              }
+            }
+          }
+        });
+
+        // 2. Corpus Split Donut Chart
+        const breakdownCtx = document.getElementById('breakdownChart').getContext('2d');
+        if (breakdownChartInstance) {
+          breakdownChartInstance.destroy();
+        }
+
+        const gainValue = Math.max(0, Math.round(result.wealthGain));
+        const investedValue = Math.round(result.totalInvested);
+
+        breakdownChartInstance = new Chart(breakdownCtx, {
+          type: 'doughnut',
+          data: {
+            labels: ['Total Invested', 'Estimated Returns'],
+            datasets: [
+              {
+                data: [investedValue, gainValue],
+                backgroundColor: ['#6366f1', '#10b981'],
+                hoverBackgroundColor: ['#4f46e5', '#059669'],
+                borderWidth: 0,
+                hoverOffset: 6
+              }
+            ]
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '68%',
+            plugins: {
+              legend: {
+                position: 'bottom',
+                labels: {
+                  color: colors.text,
+                  usePointStyle: true,
+                  padding: 16,
+                  font: { family: 'Inter', size: 12, weight: '600' }
+                }
+              },
+              tooltip: {
+                backgroundColor: colors.tooltipBg,
+                titleColor: colors.tooltipText,
+                bodyColor: colors.tooltipText,
+                borderColor: colors.tooltipBorder,
+                borderWidth: 1,
+                padding: 10,
+                callbacks: {
+                  label: (ctx) => {
+                    const total = investedValue + gainValue;
+                    const pct = total > 0 ? ((ctx.parsed / total) * 100).toFixed(1) : 0;
+                    return `${ctx.label}: ${formatINR(ctx.parsed)} (${pct}%)`;
+                  }
+                }
+              }
+            }
+          }
+        });
+      }
+
+      // =========================================================================
+      // 5. UI RENDERING & TABLE UPDATES
+      // =========================================================================
+      let latestCalculation = null;
+
+      function updateUI() {
+        const result = calculateStepUpSIP(state);
+        latestCalculation = result;
+
+        // Update Hints under sliders
+        document.getElementById('sip-shorthand-hint').textContent = `${formatShortINR(state.sipAmount)} / mo`;
+        document.getElementById('final-year-sip-hint').textContent = `Year ${state.years} SIP: ${formatINR(result.finalMonthlySIP)}/mo`;
+
+        // Update KPI Cards
+        document.getElementById('kpi-invested').textContent = formatINR(result.totalInvested);
+        document.getElementById('kpi-invested-short').textContent = formatShortINR(result.totalInvested);
+
+        document.getElementById('kpi-returns').textContent = formatINR(result.wealthGain);
+        document.getElementById('kpi-returns-short').textContent = `${formatShortINR(result.wealthGain)} (${result.wealthMultiple.toFixed(2)}x)`;
+
+        document.getElementById('kpi-corpus-label').textContent = state.adjustInflation
+          ? `Real Corpus (${state.inflationRate}% Infl.)`
+          : 'Total Corpus Value';
+        document.getElementById('kpi-corpus').textContent = formatINR(result.finalCorpus);
+        document.getElementById('kpi-corpus-short').textContent = formatShortINR(result.finalCorpus);
+
+        // Inflation pill
+        const realPill = document.getElementById('real-value-pill');
+        if (state.adjustInflation) {
+          realPill.classList.remove('hidden');
+          document.getElementById('nominal-corpus-ref').textContent = formatShortINR(result.nominalCorpus);
+        } else {
+          realPill.classList.add('hidden');
+        }
+
+        // Comparison Banner
+        const extraSign = result.extraWealth >= 0 ? '+' : '';
+        document.getElementById('badge-extra-wealth').textContent = `${extraSign}${formatINR(result.extraWealth)}`;
+        document.getElementById('flat-sip-reference').textContent = formatINR(result.finalFlatCorpus);
+        document.getElementById('badge-extra-pct').textContent = `${extraSign}${result.extraPct.toFixed(1)}% more`;
+
+        // Year Preset Buttons Highlight
+        document.querySelectorAll('.year-preset-btn').forEach((btn) => {
+          const btnYear = Number(btn.dataset.years);
+          if (btnYear === state.years) {
+            btn.className = 'year-preset-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-brand-600 text-white shadow-xs transition';
+          } else {
+            btn.className = 'year-preset-btn px-2.5 py-1 rounded-lg text-xs font-semibold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:bg-brand-100 dark:hover:bg-brand-900/50 transition';
+          }
+        });
+
+        // Year-by-Year Schedule Table
+        const tbody = document.getElementById('schedule-table-body');
+        tbody.innerHTML = result.yearlySchedule
+          .map((row) => `
+            <tr class="hover:bg-slate-50/90 dark:hover:bg-slate-800/40 transition-colors">
+              <td class="py-3 px-4 font-semibold text-slate-800 dark:text-slate-200">Year ${row.year}</td>
+              <td class="py-3 px-4 text-right font-medium text-slate-700 dark:text-slate-300">${formatINR(row.monthlySIP)}</td>
+              <td class="py-3 px-4 text-right text-slate-600 dark:text-slate-400">${formatINR(row.annualInvested)}</td>
+              <td class="py-3 px-4 text-right font-medium text-slate-700 dark:text-slate-300">${formatINR(row.totalInvested)}</td>
+              <td class="py-3 px-4 text-right font-medium text-brand-600 dark:text-brand-400">${formatINR(row.estimatedReturns)}</td>
+              <td class="py-3 px-4 text-right font-bold text-slate-900 dark:text-white">${formatINR(row.stepUpCorpus)}</td>
+              <td class="py-3 px-4 text-right text-slate-500 dark:text-slate-400">${formatINR(row.flatCorpus)}</td>
+            </tr>
+          `)
+          .join('');
+
+        // Update Charts
+        renderCharts(result);
+      }
+
+      // =========================================================================
+      // 6. INPUT BINDINGS & STEP-UP MODE TOGGLE
+      // =========================================================================
+      function bindDualControl(inputId, sliderId, min, max, stateKey) {
+        const inputEl = document.getElementById(inputId);
+        const sliderEl = document.getElementById(sliderId);
+
+        sliderEl.addEventListener('input', () => {
+          const val = parseFloat(sliderEl.value);
+          inputEl.value = val;
+          state[stateKey] = val;
+          updateUI();
+        });
+
+        inputEl.addEventListener('input', () => {
+          let val = parseFloat(inputEl.value);
+          if (isNaN(val)) return;
+          if (val < min) val = min;
+          if (val > max) val = max;
+          sliderEl.value = val;
+          state[stateKey] = val;
+          updateUI();
+        });
+
+        inputEl.addEventListener('blur', () => {
+          let val = parseFloat(inputEl.value);
+          if (isNaN(val) || val < min) val = min;
+          if (val > max) val = max;
+          inputEl.value = val;
+          sliderEl.value = val;
+          state[stateKey] = val;
+          updateUI();
+        });
+      }
+
+      function setStepUpMode(mode) {
+        state.stepUpMode = mode;
+        const percentBtn = document.getElementById('mode-percent-btn');
+        const fixedBtn = document.getElementById('mode-fixed-btn');
+        const inputEl = document.getElementById('input-stepup');
+        const sliderEl = document.getElementById('slider-stepup');
+        const prefixEl = document.getElementById('stepup-prefix');
+        const suffixEl = document.getElementById('stepup-suffix');
+        const minLabel = document.getElementById('stepup-min-label');
+        const maxLabel = document.getElementById('stepup-max-label');
+
+        if (mode === 'percent') {
+          percentBtn.className = 'px-2 py-0.5 text-[11px] font-semibold rounded-md bg-white dark:bg-slate-700 text-brand-700 dark:text-brand-300 shadow-xs transition';
+          fixedBtn.className = 'px-2 py-0.5 text-[11px] font-semibold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition';
+
+          prefixEl.classList.add('hidden');
+          suffixEl.classList.remove('hidden');
+          inputEl.classList.remove('pl-8', 'pr-3');
+          inputEl.classList.add('px-3', 'pr-7');
+
+          inputEl.min = 0;
+          inputEl.max = 50;
+          inputEl.step = 1;
+          inputEl.value = state.stepUpPercent;
+
+          sliderEl.min = 0;
+          sliderEl.max = 50;
+          sliderEl.step = 1;
+          sliderEl.value = state.stepUpPercent;
+
+          minLabel.textContent = '0% (Flat SIP)';
+          maxLabel.textContent = '50%';
+        } else {
+          fixedBtn.className = 'px-2 py-0.5 text-[11px] font-semibold rounded-md bg-white dark:bg-slate-700 text-brand-700 dark:text-brand-300 shadow-xs transition';
+          percentBtn.className = 'px-2 py-0.5 text-[11px] font-semibold rounded-md text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 transition';
+
+          prefixEl.classList.remove('hidden');
+          suffixEl.classList.add('hidden');
+          inputEl.classList.remove('px-3', 'pr-7');
+          inputEl.classList.add('pl-8', 'pr-3');
+
+          inputEl.min = 0;
+          inputEl.max = 50000;
+          inputEl.step = 500;
+          inputEl.value = state.stepUpFixed;
+
+          sliderEl.min = 0;
+          sliderEl.max = 50000;
+          sliderEl.step = 500;
+          sliderEl.value = state.stepUpFixed;
+
+          minLabel.textContent = '₹0 (Flat SIP)';
+          maxLabel.textContent = '₹50,000/yr';
+        }
+        updateUI();
+      }
+
+      // =========================================================================
+      // 7. SAVED SCENARIOS (LOCALSTORAGE) & CSV EXPORT
+      // =========================================================================
+      function getSavedScenarios() {
+        try {
+          const raw = localStorage.getItem(STORAGE_KEY);
+          return raw ? JSON.parse(raw) : [];
+        } catch {
+          return [];
+        }
+      }
+
+      function persistScenarios(list) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
+          updateSavedBadge();
+        } catch {
+          showToast('Unable to save scenario in browser storage.', 'info');
+        }
+      }
+
+      function updateSavedBadge() {
+        const count = getSavedScenarios().length;
+        document.getElementById('saved-count-badge').textContent = count;
+      }
+
+      function saveCurrentScenario() {
+        if (!latestCalculation) return;
+        const list = getSavedScenarios();
+        const stepLabel = state.stepUpMode === 'percent'
+          ? `${state.stepUpPercent}%/yr`
+          : `+${formatINR(state.stepUpFixed)}/yr`;
+
+        const entry = {
+          id: Date.now().toString(),
+          createdAt: new Date().toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }),
+          title: `${formatShortINR(state.sipAmount)} SIP • ${stepLabel} • ${state.years}Y`,
+          params: { ...state },
+          summary: {
+            totalInvested: latestCalculation.totalInvested,
+            finalCorpus: latestCalculation.finalCorpus,
+            wealthGain: latestCalculation.wealthGain,
+            extraWealth: latestCalculation.extraWealth
+          }
+        };
+
+        list.unshift(entry);
+        persistScenarios(list);
+        renderSavedScenariosDrawer();
+        showToast('Scenario saved offline for comparison!', 'success');
+      }
+
+      function renderSavedScenariosDrawer() {
+        const container = document.getElementById('saved-scenarios-list');
+        const list = getSavedScenarios();
+        updateSavedBadge();
+
+        if (list.length === 0) {
+          container.innerHTML = `
+            <div class="text-center py-12 px-4 space-y-2">
+              <div class="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-slate-800 text-slate-400 mx-auto flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                </svg>
+              </div>
+              <p class="text-sm font-semibold text-slate-700 dark:text-slate-300">No saved scenarios yet</p>
+              <p class="text-xs text-slate-500 dark:text-slate-400">Save different SIP amounts, step-up rates, or durations to compare them side-by-side.</p>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = list
+          .map((item) => {
+            const p = item.params;
+            const stepText = p.stepUpMode === 'percent' ? `${p.stepUpPercent}% Step-Up` : `+${formatINR(p.stepUpFixed)} Step-Up`;
+            return `
+              <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/70 border border-slate-200/80 dark:border-slate-700/80 space-y-3">
+                <div class="flex items-start justify-between gap-2">
+                  <div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">${item.title}</h4>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">
+                      ${p.returnRate}% p.a. • ${stepText}${p.adjustInflation ? ` • ${p.inflationRate}% Infl. Adj.` : ''} • ${item.createdAt}
+                    </p>
+                  </div>
+                  <button type="button" data-delete-id="${item.id}" aria-label="Delete scenario" class="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/50 transition">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                  </button>
+                </div>
+
+                <div class="grid grid-cols-2 gap-2 pt-1 border-t border-slate-200/60 dark:border-slate-700/60 text-xs">
+                  <div>
+                    <span class="text-slate-500 dark:text-slate-400 block text-[11px]">Invested</span>
+                    <span class="font-semibold text-slate-800 dark:text-slate-200">${formatShortINR(item.summary.totalInvested)}</span>
+                  </div>
+                  <div>
+                    <span class="text-slate-500 dark:text-slate-400 block text-[11px]">Final Corpus</span>
+                    <span class="font-extrabold text-brand-600 dark:text-brand-400">${formatShortINR(item.summary.finalCorpus)}</span>
+                  </div>
+                </div>
+
+                <button type="button" data-load-id="${item.id}" class="w-full py-1.5 px-3 rounded-xl bg-white dark:bg-slate-900 hover:bg-brand-50 dark:hover:bg-brand-950/50 text-brand-700 dark:text-brand-300 border border-slate-200 dark:border-slate-700 text-xs font-semibold transition">
+                  Load into Calculator
+                </button>
+              </div>
+            `;
+          })
+          .join('');
+      }
+
+      function applySavedScenario(params) {
+        Object.assign(state, params);
+
+        document.getElementById('input-sip').value = state.sipAmount;
+        document.getElementById('slider-sip').value = state.sipAmount;
+
+        document.getElementById('input-rate').value = state.returnRate;
+        document.getElementById('slider-rate').value = state.returnRate;
+
+        document.getElementById('input-years').value = state.years;
+        document.getElementById('slider-years').value = state.years;
+
+        const inflToggle = document.getElementById('toggle-inflation');
+        inflToggle.checked = state.adjustInflation;
+        document.getElementById('inflation-controls').classList.toggle('hidden', !state.adjustInflation);
+        document.getElementById('input-inflation').value = state.inflationRate;
+        document.getElementById('slider-inflation').value = state.inflationRate;
+
+        setStepUpMode(state.stepUpMode);
+        closeScenariosDrawer();
+        showToast('Scenario loaded into calculator.', 'success');
+      }
+
+      function exportScheduleCSV() {
+        if (!latestCalculation) return;
+        const headers = [
+          'Year',
+          'Monthly SIP (INR)',
+          'Annual Invested (INR)',
+          'Total Invested (INR)',
+          'Estimated Returns (INR)',
+          'Step-Up Corpus (INR)',
+          'Flat SIP Corpus (INR)'
+        ];
+
+        const rows = latestCalculation.yearlySchedule.map((r) => [
+          r.year,
+          Math.round(r.monthlySIP),
+          Math.round(r.annualInvested),
+          Math.round(r.totalInvested),
+          Math.round(r.estimatedReturns),
+          Math.round(r.stepUpCorpus),
+          Math.round(r.flatCorpus)
+        ]);
+
+        const csvContent = [headers.join(','), ...rows.map((e) => e.join(','))].join('\n');
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `StepUp_SIP_Schedule_${state.years}Y.csv`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        showToast('CSV schedule downloaded!', 'success');
+      }
+
+      // =========================================================================
+      // 8. DRAWER & THEME CONTROLS
+      // =========================================================================
+      function openScenariosDrawer() {
+        renderSavedScenariosDrawer();
+        document.getElementById('scenarios-modal').classList.remove('hidden');
+      }
+
+      function closeScenariosDrawer() {
+        document.getElementById('scenarios-modal').classList.add('hidden');
+      }
+
+      function initTheme() {
+        const savedTheme = localStorage.getItem(THEME_KEY);
+        const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+        if (savedTheme === 'dark' || (!savedTheme && prefersDark)) {
+          document.documentElement.classList.add('dark');
+        } else {
+          document.documentElement.classList.remove('dark');
+        }
+      }
+
+      function toggleTheme() {
+        const html = document.documentElement;
+        const isDark = html.classList.toggle('dark');
+        localStorage.setItem(THEME_KEY, isDark ? 'dark' : 'light');
+        if (latestCalculation) {
+          renderCharts(latestCalculation);
+        }
+      }
+
+      // =========================================================================
+      // 9. INITIALIZATION ON DOM READY
+      // =========================================================================
+      window.addEventListener('DOMContentLoaded', () => {
+        initTheme();
+        initPWA();
+        updateSavedBadge();
+
+        // Bind dual controls
+        bindDualControl('input-sip', 'slider-sip', 500, 500000, 'sipAmount');
+        bindDualControl('input-rate', 'slider-rate', 1, 30, 'returnRate');
+        bindDualControl('input-years', 'slider-years', 1, 40, 'years');
+        bindDualControl('input-inflation', 'slider-inflation', 1, 15, 'inflationRate');
+
+        // Special dual binding for step-up since min/max/key switches between % and fixed ₹
+        const stepUpInput = document.getElementById('input-stepup');
+        const stepUpSlider = document.getElementById('slider-stepup');
+
+        stepUpSlider.addEventListener('input', () => {
+          const val = parseFloat(stepUpSlider.value);
+          stepUpInput.value = val;
+          if (state.stepUpMode === 'percent') state.stepUpPercent = val;
+          else state.stepUpFixed = val;
+          updateUI();
+        });
+
+        stepUpInput.addEventListener('input', () => {
+          let val = parseFloat(stepUpInput.value);
+          if (isNaN(val)) return;
+          const max = state.stepUpMode === 'percent' ? 50 : 50000;
+          if (val < 0) val = 0;
+          if (val > max) val = max;
+          stepUpSlider.value = val;
+          if (state.stepUpMode === 'percent') state.stepUpPercent = val;
+          else state.stepUpFixed = val;
+          updateUI();
+        });
+
+        stepUpInput.addEventListener('blur', () => {
+          let val = parseFloat(stepUpInput.value);
+          const max = state.stepUpMode === 'percent' ? 50 : 50000;
+          if (isNaN(val) || val < 0) val = 0;
+          if (val > max) val = max;
+          stepUpInput.value = val;
+          stepUpSlider.value = val;
+          if (state.stepUpMode === 'percent') state.stepUpPercent = val;
+          else state.stepUpFixed = val;
+          updateUI();
+        });
+
+        // Step-up mode buttons
+        document.getElementById('mode-percent-btn').addEventListener('click', () => setStepUpMode('percent'));
+        document.getElementById('mode-fixed-btn').addEventListener('click', () => setStepUpMode('fixed'));
+
+        // Year Preset Buttons
+        document.querySelectorAll('.year-preset-btn').forEach((btn) => {
+          btn.addEventListener('click', () => {
+            const yrs = Number(btn.dataset.years);
+            state.years = yrs;
+            document.getElementById('input-years').value = yrs;
+            document.getElementById('slider-years').value = yrs;
+            updateUI();
+          });
+        });
+
+        // Inflation Toggle
+        const inflationToggle = document.getElementById('toggle-inflation');
+        inflationToggle.addEventListener('change', () => {
+          state.adjustInflation = inflationToggle.checked;
+          document.getElementById('inflation-controls').classList.toggle('hidden', !state.adjustInflation);
+          updateUI();
+        });
+
+        // Chart Tabs
+        const tabGrowth = document.getElementById('tab-growth-chart');
+        const tabBreakdown = document.getElementById('tab-breakdown-chart');
+        const wrapGrowth = document.getElementById('growth-chart-wrapper');
+        const wrapBreakdown = document.getElementById('breakdown-chart-wrapper');
+
+        tabGrowth.addEventListener('click', () => {
+          state.activeChartTab = 'growth';
+          tabGrowth.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition';
+          tabBreakdown.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition';
+          wrapGrowth.classList.remove('hidden');
+          wrapBreakdown.classList.add('hidden');
+        });
+
+        tabBreakdown.addEventListener('click', () => {
+          state.activeChartTab = 'breakdown';
+          tabBreakdown.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs transition';
+          tabGrowth.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white transition';
+          wrapBreakdown.classList.remove('hidden');
+          wrapGrowth.classList.add('hidden');
+        });
+
+        // Reset Defaults
+        document.getElementById('reset-defaults-btn').addEventListener('click', () => {
+          applySavedScenario({
+            sipAmount: 10000,
+            stepUpMode: 'percent',
+            stepUpPercent: 10,
+            stepUpFixed: 1000,
+            returnRate: 12,
+            years: 15,
+            adjustInflation: false,
+            inflationRate: 6,
+            activeChartTab: state.activeChartTab
+          });
+          showToast('Reset to default SIP parameters.');
+        });
+
+        // Theme Toggle
+        document.getElementById('theme-toggle-btn').addEventListener('click', toggleTheme);
+
+        // CSV Export
+        document.getElementById('export-csv-btn').addEventListener('click', exportScheduleCSV);
+
+        // Save Scenario & Drawer Controls
+        document.getElementById('save-scenario-btn').addEventListener('click', saveCurrentScenario);
+        document.getElementById('save-current-from-drawer-btn').addEventListener('click', saveCurrentScenario);
+        document.getElementById('open-scenarios-btn').addEventListener('click', openScenariosDrawer);
+        document.getElementById('close-scenarios-btn').addEventListener('click', closeScenariosDrawer);
+        document.getElementById('scenarios-backdrop').addEventListener('click', closeScenariosDrawer);
+
+        document.getElementById('clear-all-scenarios-btn').addEventListener('click', () => {
+          persistScenarios([]);
+          renderSavedScenariosDrawer();
+          showToast('All saved scenarios cleared.');
+        });
+
+        // Event delegation for load/delete inside saved scenarios drawer
+        document.getElementById('saved-scenarios-list').addEventListener('click', (e) => {
+          const deleteBtn = e.target.closest('[data-delete-id]');
+          if (deleteBtn) {
+            const id = deleteBtn.dataset.deleteId;
+            const filtered = getSavedScenarios().filter((item) => item.id !== id);
+            persistScenarios(filtered);
+            renderSavedScenariosDrawer();
+            showToast('Scenario removed.');
+            return;
+          }
+
+          const loadBtn = e.target.closest('[data-load-id]');
+          if (loadBtn) {
+            const id = loadBtn.dataset.loadId;
+            const found = getSavedScenarios().find((item) => item.id === id);
+            if (found) {
+              applySavedScenario(found.params);
+            }
+          }
+        });
+
+        // Initial Render
+        updateUI();
+      });
+    })();
+  </script>
+</body>
+</html>
